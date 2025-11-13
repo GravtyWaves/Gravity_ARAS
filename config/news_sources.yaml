@@ -1,0 +1,192 @@
+# ARAS News Sources Configuration
+# English-first approach for better NLP and SEO
+# Updated: November 13, 2025
+
+# Iranian English News Sources
+iranian_english_sources:
+  - name: "PressTV"
+    url: "https://www.presstv.ir"
+    rss_feeds:
+      - "https://www.presstv.ir/RSS/Rss.xml"
+      - "https://www.presstv.ir/RSS/Detail/Latest.xml"
+    category: "iranian_perspective"
+    language: "en"
+    priority: "high"
+    update_frequency: "15min"
+    
+  - name: "Tehran Times"
+    url: "https://www.tehrantimes.com"
+    rss_feeds:
+      - "https://www.tehrantimes.com/rss/national"
+      - "https://www.tehrantimes.com/rss/economy"
+      - "https://www.tehrantimes.com/rss/politics"
+    category: "iranian_news"
+    language: "en"
+    priority: "high"
+    update_frequency: "30min"
+    
+  - name: "IRNA English"
+    url: "https://en.irna.ir"
+    rss_feeds:
+      - "https://en.irna.ir/service/home.html?rss"
+    category: "official_news"
+    language: "en"
+    priority: "high"
+    update_frequency: "20min"
+    
+  - name: "Iran Daily"
+    url: "https://www.iran-daily.com"
+    category: "iranian_news"
+    language: "en"
+    priority: "medium"
+    update_frequency: "60min"
+    
+  - name: "Financial Tribune"
+    url: "https://financialtribune.com"
+    rss_feeds:
+      - "https://financialtribune.com/rss"
+    category: "economy"
+    language: "en"
+    priority: "medium"
+    update_frequency: "60min"
+
+# International Sources (Iran Coverage)
+international_sources:
+  - name: "Reuters Iran"
+    url: "https://www.reuters.com"
+    rss_feeds:
+      - "https://www.reuters.com/world/middle-east/"
+    category: "international_perspective"
+    language: "en"
+    priority: "high"
+    update_frequency: "15min"
+    
+  - name: "BBC Middle East"
+    url: "https://www.bbc.com/news/world/middle_east"
+    rss_feeds:
+      - "https://feeds.bbci.co.uk/news/world/middle_east/rss.xml"
+    category: "international_news"
+    language: "en"
+    priority: "high"
+    update_frequency: "20min"
+    
+  - name: "Al Jazeera Middle East"
+    url: "https://www.aljazeera.com/middle-east/"
+    rss_feeds:
+      - "https://www.aljazeera.com/xml/rss/all.xml"
+    category: "regional_news"
+    language: "en"
+    priority: "high"
+    update_frequency: "15min"
+    
+  - name: "The Guardian Middle East"
+    url: "https://www.theguardian.com/world/middleeast"
+    rss_feeds:
+      - "https://www.theguardian.com/world/middleeast/rss"
+    category: "international_news"
+    language: "en"
+    priority: "medium"
+    update_frequency: "30min"
+    
+  - name: "Associated Press Middle East"
+    url: "https://apnews.com/hub/middle-east"
+    rss_feeds:
+      - "https://apnews.com/middle-east.rss"
+    category: "wire_service"
+    language: "en"
+    priority: "high"
+    update_frequency: "20min"
+
+# Specialized Sources
+specialized_sources:
+  - name: "Middle East Eye"
+    url: "https://www.middleeasteye.net"
+    category: "analysis"
+    language: "en"
+    priority: "medium"
+    update_frequency: "60min"
+    
+  - name: "Times of Israel (Iran Coverage)"
+    url: "https://www.timesofisrael.com"
+    rss_feeds:
+      - "https://www.timesofisrael.com/feed/"
+    category: "regional_perspective"
+    language: "en"
+    priority: "low"
+    update_frequency: "120min"
+
+# NLP Processing Configuration
+nlp_config:
+  primary_language: "en"
+  models:
+    - name: "spaCy"
+      model: "en_core_web_lg"
+      tasks:
+        - "entity_extraction"
+        - "pos_tagging"
+        - "dependency_parsing"
+    
+    - name: "transformers"
+      model: "bert-base-uncased"
+      tasks:
+        - "sentiment_analysis"
+        - "text_classification"
+    
+    - name: "gensim"
+      tasks:
+        - "topic_modeling"
+        - "keyword_extraction"
+  
+  entity_types:
+    - "PERSON"
+    - "ORG"
+    - "GPE"  # Geopolitical Entity
+    - "LOC"  # Location
+    - "DATE"
+    - "MONEY"
+    - "PERCENT"
+  
+  sentiment_threshold:
+    positive: 0.6
+    negative: -0.6
+  
+  keyword_extraction:
+    method: "textrank"
+    top_n: 10
+
+# Content Filtering
+content_filters:
+  required_keywords:
+    - "Iran"
+    - "Tehran"
+    - "Iranian"
+    - "Persia"
+    - "Middle East"
+  
+  exclude_topics:
+    - "spam"
+    - "adult"
+    - "violence"
+  
+  min_content_length: 200  # characters
+  max_content_length: 50000
+
+# Scraping Configuration
+scraping_config:
+  user_agent: "ARAS News Aggregator Bot/1.0 (+https://aras-news.com/bot)"
+  respect_robots_txt: true
+  concurrent_requests: 16
+  download_delay: 2  # seconds
+  retry_times: 3
+  timeout: 30  # seconds
+  
+# Google Analytics Integration
+analytics:
+  enabled: true
+  ga4_measurement_id: "G-XXXXXXXXXX"  # To be configured
+  events:
+    - "article_view"
+    - "article_search"
+    - "entity_click"
+    - "trend_view"
+    - "api_request"
