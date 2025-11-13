@@ -82,9 +82,8 @@ async def test_db_session(test_engine) -> AsyncGenerator[AsyncSession, None]:
     async_session = sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)
 
     async with async_session() as session:
-        async with session.begin():
-            yield session
-            await session.rollback()
+        yield session
+        await session.rollback()
 
 
 @pytest.fixture

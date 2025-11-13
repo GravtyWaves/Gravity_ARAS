@@ -6,6 +6,7 @@ Built by Elite Team - Database Engineer (PhD in Database Systems)
 """
 
 from sqlalchemy import JSON, Column, DateTime, Float, Integer, String, Text
+from sqlalchemy.orm import validates
 from sqlalchemy.sql import func
 
 from app.core.database import Base
@@ -31,6 +32,14 @@ class NewsArticle(Base):
     url = Column(String(1000), unique=True, index=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    @validates("url")
+    def validate_url(self, key, value):
+        """Convert Pydantic HttpUrl to string before DB insert."""
+        if value is None:
+            return value
+        # Handle Pydantic HttpUrl type
+        return str(value)
 
     def __repr__(self):
         return f"<NewsArticle(id={self.id}, title='{self.title[:50]}...')>"

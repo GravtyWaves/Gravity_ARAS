@@ -38,7 +38,22 @@ class NewsService:
         await db.refresh(article)
 
         # Cache the article
-        await redis_client.set_json(f"article:{article.id}", article_data.model_dump())
+        article_dict = {
+            "id": article.id,
+            "title": article.title,
+            "content": article.content,
+            "summary": article.summary,
+            "source": article.source,
+            "published_date": article.published_date.isoformat() if article.published_date else None,
+            "language": article.language,
+            "category": article.category,
+            "tags": article.tags,
+            "sentiment_score": article.sentiment_score,
+            "entities": article.entities,
+            "topics": article.topics,
+            "url": article.url,
+        }
+        await redis_client.set_json(f"article:{article.id}", article_dict)
 
         logger.info(f"Created news article: {article.id}")
         return article
@@ -185,24 +200,42 @@ class NewsService:
         db: AsyncSession, query: str, skip: int = 0, limit: int = 50
     ) -> List[NewsArticle]:
         """
-        Search articles using PostgreSQL full-text search.
+        Search articles using database-specific full-text search.
 
-        Uses tsvector column with GIN index for fast search.
+        Uses PostgreSQL full-text search in production, SQLite LIKE fallback in tests.
         """
         from sqlalchemy import text
 
-        # Use PostgreSQL full-text search with ranking
-        sql = text(
-            """
-            SELECT * FROM news_articles
-            WHERE search_vector @@ plainto_tsquery('english', :query)
-            ORDER BY ts_rank(search_vector, plainto_tsquery('english', :query)) DESC
-            OFFSET :skip
-            LIMIT :limit
-        """
-        )
+        # Detect database dialect
+        dialect_name = db.bind.dialect.name
 
-        result = await db.execute(sql, {"query": query, "skip": skip, "limit": limit})
+        if dialect_name == 'sqlite':
+            # SQLite fallback using LIKE operator
+            sql = text(
+                """
+                SELECT * FROM news_articles
+                WHERE title LIKE :query OR content LIKE :query
+                ORDER BY published_date DESC
+                LIMIT :limit
+                OFFSET :skip
+            """
+            )
+            # Wrap query with % for LIKE operator
+            query_param = f"%{query}%"
+            result = await db.execute(sql, {"query": query_param, "skip": skip, "limit": limit})
+        else:
+            # PostgreSQL full-text search with ranking
+            sql = text(
+                """
+                SELECT * FROM news_articles
+                WHERE search_vector @@ plainto_tsquery('english', :query)
+                ORDER BY ts_rank(search_vector, plainto_tsquery('english', :query)) DESC
+                OFFSET :skip
+                LIMIT :limit
+            """
+            )
+            result = await db.execute(sql, {"query": query, "skip": skip, "limit": limit})
+
         rows = result.fetchall()
 
         # Convert rows to NewsArticle objects
