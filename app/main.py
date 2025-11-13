@@ -34,6 +34,7 @@ from app.core.config import settings
 from app.core.database import create_tables
 from app.core.rate_limiter import RateLimiter
 from app.core.redis_client import redis_client
+from app.core.security_headers import SecurityHeadersMiddleware
 
 # Configure logging
 logging.basicConfig(
@@ -81,6 +82,9 @@ if settings.BACKEND_CORS_ORIGINS:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+# Add security headers middleware
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Add trusted host middleware
 if not settings.DEBUG:
