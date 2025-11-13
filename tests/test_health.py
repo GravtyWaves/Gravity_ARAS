@@ -1,16 +1,15 @@
 """Tests for health check endpoint."""
 
 import pytest
-from httpx import AsyncClient
+from fastapi.testclient import TestClient
 
 
 class TestHealthEndpoint:
     """Test cases for health check API."""
 
-    @pytest.mark.asyncio
-    async def test_health_check_success(self, client: AsyncClient):
+    def test_health_check_success(self, client: TestClient):
         """Test successful health check response."""
-        response = await client.get("/health")
+        response = client.get("/health")
 
         assert response.status_code == 200
         data = response.json()
@@ -21,10 +20,9 @@ class TestHealthEndpoint:
         assert "timestamp" in data["data"]
         assert "version" in data["data"]
 
-    @pytest.mark.asyncio
-    async def test_health_check_database_connection(self, client: AsyncClient):
+    def test_health_check_database_connection(self, client: TestClient):
         """Test database connection in health check."""
-        response = await client.get("/health")
+        response = client.get("/health")
 
         assert response.status_code == 200
         data = response.json()
@@ -32,10 +30,9 @@ class TestHealthEndpoint:
         assert "database" in data["data"]
         assert data["data"]["database"]["status"] == "connected"
 
-    @pytest.mark.asyncio
-    async def test_health_check_redis_connection(self, client: AsyncClient):
+    def test_health_check_redis_connection(self, client: TestClient):
         """Test Redis connection in health check."""
-        response = await client.get("/health")
+        response = client.get("/health")
 
         assert response.status_code == 200
         data = response.json()

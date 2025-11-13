@@ -5,16 +5,18 @@ from typing import AsyncGenerator, Generator
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.core.database import get_db
 from app.main import app
 from app.models.news_models import Base
 
-# Test database URL
-TEST_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
+# Test database URLs
+ASYNC_TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+SYNC_TEST_DATABASE_URL = "sqlite:///:memory:"
 
 
 @pytest.fixture(scope="session")
@@ -25,11 +27,33 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
     loop.close()
 
 
+@pytest.fixture(scope="function")
+def sync_db_session() -> Generator[Session, None, None]:
+    """Create synchronous database session for API tests."""
+    engine = create_engine(
+        SYNC_TEST_DATABASE_URL,
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    
+    # Create all tables
+    Base.metadata.create_all(bind=engine)
+    
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    session = SessionLocal()
+    
+    try:
+        yield session
+    finally:
+        session.close()
+        Base.metadata.drop_all(bind=engine)
+
+
 @pytest.fixture(scope="session")
 async def test_engine():
-    """Create test database engine."""
+    """Create test database engine for async tests."""
     engine = create_async_engine(
-        TEST_DATABASE_URL,
+        ASYNC_TEST_DATABASE_URL,
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
         echo=False,
@@ -54,19 +78,24 @@ async def async_db(test_db_session) -> AsyncSession:
 
 @pytest.fixture
 async def test_db_session(test_engine) -> AsyncGenerator[AsyncSession, None]:
-    """Create test database session."""
+    """Create test database session for async tests."""
     async_session = sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)
 
     async with async_session() as session:
-        yield session
+        async with session.begin():
+            yield session
+            await session.rollback()
 
 
 @pytest.fixture
-def client(test_db_session) -> Generator[TestClient, None, None]:
+def client(sync_db_session) -> Generator[TestClient, None, None]:
     """Create test client with database session override."""
 
-    async def override_get_db():
-        yield test_db_session
+    def override_get_db():
+        try:
+            yield sync_db_session
+        finally:
+            sync_db_session.rollback()
 
     app.dependency_overrides[get_db] = override_get_db
 
@@ -84,7 +113,7 @@ async def sample_article_data():
         "content": "This is a test article content for testing purposes.",
         "url": "https://example.com/test-article",
         "source": "Test Source",
-        "published_date": "2024-01-01T00:00:00Z",
+        "published_date": "2024-01-01T00:00:00",
         "language": "en",
         "tags": ["test", "article"],
     }
@@ -98,8 +127,8 @@ async def sample_entity_data():
         "type": "PERSON",
         "confidence": 0.95,
         "mentions": 5,
-        "first_mention": "2024-01-01T00:00:00Z",
-        "last_mention": "2024-01-01T12:00:00Z",
+        "first_mention": "2024-01-01T00:00:00",
+        "last_mention": "2024-01-01T12:00:00",
     }
 
 
@@ -111,7 +140,7 @@ async def sample_trend_data():
         "keywords": ["test", "trend", "analysis"],
         "frequency": 100,
         "sentiment_score": 0.7,
-        "start_date": "2024-01-01T00:00:00Z",
-        "end_date": "2024-01-02T00:00:00Z",
+        "start_date": "2024-01-01T00:00:00",
+        "end_date": "2024-01-02T00:00:00",
         "is_active": True,
     }
