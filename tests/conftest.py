@@ -4,7 +4,7 @@ import asyncio
 from typing import AsyncGenerator, Generator
 
 import pytest
-from httpx import AsyncClient
+from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -47,6 +47,12 @@ async def test_engine():
 
 
 @pytest.fixture
+async def async_db(test_db_session) -> AsyncSession:
+    """Provide async database session for service tests."""
+    return test_db_session
+
+
+@pytest.fixture
 async def test_db_session(test_engine) -> AsyncGenerator[AsyncSession, None]:
     """Create test database session."""
     async_session = sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)
@@ -56,7 +62,7 @@ async def test_db_session(test_engine) -> AsyncGenerator[AsyncSession, None]:
 
 
 @pytest.fixture
-async def client(test_db_session) -> AsyncGenerator[AsyncClient, None]:
+def client(test_db_session) -> Generator[TestClient, None, None]:
     """Create test client with database session override."""
 
     async def override_get_db():
@@ -64,8 +70,8 @@ async def client(test_db_session) -> AsyncGenerator[AsyncClient, None]:
 
     app.dependency_overrides[get_db] = override_get_db
 
-    async with AsyncClient(app=app, base_url="http://testserver") as client:
-        yield client
+    with TestClient(app) as tc:
+        yield tc
 
     app.dependency_overrides.clear()
 

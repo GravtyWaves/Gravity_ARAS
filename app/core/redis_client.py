@@ -108,3 +108,8 @@ class RedisClient:
 
 # Global Redis client instance
 redis_client = RedisClient()
+
+
+def get_redis() -> Optional[redis.Redis]:
+    """Get Redis client instance (for dependency injection)."""
+    return redis_client.client if redis_client else None

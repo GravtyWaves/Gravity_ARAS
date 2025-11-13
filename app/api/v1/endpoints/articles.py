@@ -135,12 +135,16 @@ async def delete_article(article_id: int, db: AsyncSession = Depends(get_db)):
 
 @router.get("/search/", response_model=APIResponse)
 async def search_articles(
-    q: str = Query(..., min_length=1, max_length=100),
-    skip: int = Query(0, ge=0),
-    limit: int = Query(50, ge=1, le=200),
+    q: str = Query(..., min_length=1, max_length=200, description="Search query"),
+    skip: int = Query(0, ge=0, description="Pagination offset"),
+    limit: int = Query(50, ge=1, le=200, description="Results limit"),
     db: AsyncSession = Depends(get_db),
 ):
-    """Search articles by title or content."""
+    """
+    Full-text search articles using PostgreSQL.
+
+    Searches in title, content, and summary with relevance ranking.
+    """
     articles = await NewsService.search_articles(db, q, skip, limit)
 
     return APIResponse(
@@ -150,5 +154,80 @@ async def search_articles(
             "articles": [NewsArticle.from_orm(article).model_dump() for article in articles],
             "query": q,
             "total": len(articles),
+            "skip": skip,
+            "limit": limit,
+        },
+    )
+
+
+@router.post("/search/advanced", response_model=APIResponse)
+async def advanced_search(
+    q: Optional[str] = Query(None, max_length=200, description="Search query"),
+    category: Optional[str] = Query(None, description="Filter by category"),
+    source: Optional[str] = Query(None, description="Filter by source"),
+    language: Optional[str] = Query(None, description="Filter by language"),
+    tags: Optional[str] = Query(None, description="Comma-separated tags"),
+    sentiment_min: Optional[float] = Query(None, ge=-1.0, le=1.0, description="Min sentiment"),
+    sentiment_max: Optional[float] = Query(None, ge=-1.0, le=1.0, description="Max sentiment"),
+    start_date: Optional[str] = Query(None, description="Start date (ISO format)"),
+    end_date: Optional[str] = Query(None, description="End date (ISO format)"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Advanced search with multiple filters.
+
+    Supports:
+    - Full-text search (q)
+    - Category, source, language filters
+    - Tag filtering
+    - Sentiment range filtering
+    - Date range filtering
+    - Pagination
+    """
+    # Parse tags if provided
+    tag_list = [tag.strip() for tag in tags.split(",")] if tags else None
+
+    articles = await NewsService.advanced_search(
+        db=db,
+        query=q,
+        category=category,
+        source=source,
+        language=language,
+        tags=tag_list,
+        sentiment_min=sentiment_min,
+        sentiment_max=sentiment_max,
+        start_date=start_date,
+        end_date=end_date,
+        skip=skip,
+        limit=limit,
+    )
+
+    return APIResponse(
+        success=True,
+        message=f"Found {len(articles)} articles",
+        data={
+            "articles": [NewsArticle.from_orm(article).model_dump() for article in articles],
+            "filters": {
+                "query": q,
+                "category": category,
+                "source": source,
+                "language": language,
+                "tags": tag_list,
+                "sentiment_range": (
+                    [sentiment_min, sentiment_max]
+                    if sentiment_min is not None or sentiment_max is not None
+                    else None
+                ),
+                "date_range": (
+                    [start_date, end_date]
+                    if start_date is not None or end_date is not None
+                    else None
+                ),
+            },
+            "total": len(articles),
+            "skip": skip,
+            "limit": limit,
         },
     )

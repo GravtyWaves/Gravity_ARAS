@@ -20,6 +20,7 @@ Features:
 """
 
 import logging
+import time
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
@@ -31,6 +32,7 @@ from fastapi.responses import JSONResponse
 from app.api.v1.api import api_router
 from app.core.config import settings
 from app.core.database import create_tables
+from app.core.rate_limiter import RateLimiter
 from app.core.redis_client import redis_client
 
 # Configure logging
@@ -86,6 +88,44 @@ if not settings.DEBUG:
         TrustedHostMiddleware,
         allowed_hosts=settings.ALLOWED_HOSTS,
     )
+
+
+# Rate limiting middleware
+rate_limiter = RateLimiter(requests_per_minute=60, requests_per_hour=1000)
+
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    """Apply rate limiting to all requests."""
+    # Skip rate limiting for health check
+    if request.url.path in ["/health", "/"]:
+        return await call_next(request)
+
+    # Check rate limit
+    try:
+        await rate_limiter.check_rate_limit(request)
+    except Exception as e:
+        # If rate limit exceeded, exception is already raised
+        # If Redis error, log and continue
+        if "Rate limit exceeded" not in str(e):
+            logger.warning(f"Rate limiting error: {e}")
+
+    # Add request timing
+    start_time = time.time()
+    response = await call_next(request)
+    process_time = time.time() - start_time
+
+    # Add headers
+    response.headers["X-Process-Time"] = str(process_time)
+    if hasattr(request.state, "rate_limit_remaining_minute"):
+        response.headers["X-RateLimit-Remaining-Minute"] = str(
+            request.state.rate_limit_remaining_minute
+        )
+        response.headers["X-RateLimit-Remaining-Hour"] = str(
+            request.state.rate_limit_remaining_hour
+        )
+
+    return response
 
 
 @app.get("/health")

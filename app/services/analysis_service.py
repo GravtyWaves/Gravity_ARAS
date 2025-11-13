@@ -7,7 +7,6 @@ Built by Elite Team - Data Scientist (PhD in Data Science)
 
 import logging
 
-
 from app.schemas.news_schemas import (
     EntitiesResponse,
     GraphAnalysisResponse,

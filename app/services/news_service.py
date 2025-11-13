@@ -184,16 +184,129 @@ class NewsService:
     async def search_articles(
         db: AsyncSession, query: str, skip: int = 0, limit: int = 50
     ) -> List[NewsArticle]:
-        """Search articles by title or content."""
-        # Simple text search (PostgreSQL full-text search would be better)
-        search_query = f"%{query}%"
-        result = await db.execute(
-            select(NewsArticle)
-            .where(
-                (NewsArticle.title.ilike(search_query)) | (NewsArticle.content.ilike(search_query))
-            )
-            .offset(skip)
-            .limit(limit)
-            .order_by(NewsArticle.published_date.desc())
+        """
+        Search articles using PostgreSQL full-text search.
+
+        Uses tsvector column with GIN index for fast search.
+        """
+        from sqlalchemy import text
+
+        # Use PostgreSQL full-text search with ranking
+        sql = text(
+            """
+            SELECT * FROM news_articles
+            WHERE search_vector @@ plainto_tsquery('english', :query)
+            ORDER BY ts_rank(search_vector, plainto_tsquery('english', :query)) DESC
+            OFFSET :skip
+            LIMIT :limit
+        """
         )
+
+        result = await db.execute(sql, {"query": query, "skip": skip, "limit": limit})
+        rows = result.fetchall()
+
+        # Convert rows to NewsArticle objects
+        articles = []
+        for row in rows:
+            article = NewsArticle(
+                id=row[0],
+                title=row[1],
+                content=row[2],
+                summary=row[3],
+                source=row[4],
+                published_date=row[5],
+                language=row[6],
+                category=row[7],
+                tags=row[8],
+                sentiment_score=row[9],
+                entities=row[10],
+                topics=row[11],
+                url=row[12],
+                created_at=row[13],
+                updated_at=row[14],
+            )
+            articles.append(article)
+
+        return articles
+
+    @staticmethod
+    async def advanced_search(
+        db: AsyncSession,
+        query: Optional[str] = None,
+        category: Optional[str] = None,
+        source: Optional[str] = None,
+        language: Optional[str] = None,
+        tags: Optional[List[str]] = None,
+        sentiment_min: Optional[float] = None,
+        sentiment_max: Optional[float] = None,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+        skip: int = 0,
+        limit: int = 50,
+    ) -> List[NewsArticle]:
+        """
+        Advanced search with multiple filters.
+
+        Combines full-text search with filtering capabilities.
+        """
+        from datetime import datetime
+
+        from sqlalchemy import and_, text
+
+        conditions = []
+
+        # Full-text search
+        if query:
+            conditions.append(
+                text("search_vector @@ plainto_tsquery('english', :query)").bindparams(query=query)
+            )
+
+        # Category filter
+        if category:
+            conditions.append(NewsArticle.category == category)
+
+        # Source filter
+        if source:
+            conditions.append(NewsArticle.source == source)
+
+        # Language filter
+        if language:
+            conditions.append(NewsArticle.language == language)
+
+        # Tags filter (JSON array contains)
+        if tags:
+            for tag in tags:
+                conditions.append(text("tags @> :tag").bindparams(tag=f'["{tag}"]'))
+
+        # Sentiment range filter
+        if sentiment_min is not None:
+            conditions.append(NewsArticle.sentiment_score >= sentiment_min)
+        if sentiment_max is not None:
+            conditions.append(NewsArticle.sentiment_score <= sentiment_max)
+
+        # Date range filter
+        if start_date:
+            conditions.append(NewsArticle.published_date >= datetime.fromisoformat(start_date))
+        if end_date:
+            conditions.append(NewsArticle.published_date <= datetime.fromisoformat(end_date))
+
+        # Build query
+        search_query = select(NewsArticle)
+        if conditions:
+            search_query = search_query.where(and_(*conditions))
+
+        # Order by relevance if full-text search, otherwise by date
+        if query:
+            search_query = search_query.order_by(
+                text("ts_rank(search_vector, plainto_tsquery('english', :query)) DESC").bindparams(
+                    query=query
+                )
+            )
+        else:
+            search_query = search_query.order_by(NewsArticle.published_date.desc())
+
+        # Pagination
+        search_query = search_query.offset(skip).limit(limit)
+
+        result = await db.execute(search_query)
         return result.scalars().all()
