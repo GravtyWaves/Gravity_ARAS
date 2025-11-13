@@ -2,6 +2,13 @@
 NLP Proof-of-Concept Script
 Tests Hazm (Persian) and spaCy (English) integration
 
+⚠️  DEPRECATED FOR v1.0.0 ⚠️
+Strategic decision: English-only content for better ML/NLP performance
+Production uses: app/nlp/spacy_engine.py with en_core_web_sm
+
+This POC script kept for reference only.
+To use Hazm, install: pip install hazm
+
 This script validates:
 1. Model loading time
 2. Memory footprint
@@ -58,11 +65,17 @@ class HazmNLPEngine:
         
     @measure_performance
     def load_models(self):
-        """Load Hazm models and components."""
-        print("Loading Hazm (Persian NLP) models...")
+        """
+        Load Hazm models and components.
+        
+        Note: Hazm deprecated for v1.0.0 (English-only strategic decision).
+        This POC file kept for reference but not used in production.
+        """
+        print("⚠️  Hazm POC deprecated - v1.0.0 uses English-only content")
+        print("This file is for reference only and not used in production.")
         
         try:
-            from hazm import Normalizer, Lemmatizer, POSTagger
+            from hazm import Normalizer, Lemmatizer, POSTagger  # type: ignore
             
             self.normalizer = Normalizer()
             self.lemmatizer = Lemmatizer()
@@ -71,13 +84,17 @@ class HazmNLPEngine:
             print("✓ Hazm models loaded successfully")
             return True
             
+        except ImportError:
+            print("✗ Hazm not installed (expected - not needed for v1.0.0)")
+            print("Production uses spaCy en_core_web_sm for English-only content")
+            return False
         except Exception as e:
             print(f"✗ Failed to load Hazm: {e}")
             print("Note: Hazm may require additional resources. Continuing with basic functionality...")
             
             # Try basic normalizer only
             try:
-                from hazm import Normalizer
+                from hazm import Normalizer  # type: ignore
                 self.normalizer = Normalizer()
                 print("✓ Hazm Normalizer loaded successfully")
                 return True
