@@ -29,8 +29,9 @@ class RedisClient:
             await self.client.ping()
             logger.info("Connected to Redis successfully")
         except Exception as e:
-            logger.error(f"Failed to connect to Redis: {e}")
-            raise
+            logger.warning(f"Failed to connect to Redis: {e}")
+            logger.warning("Continuing without Redis caching...")
+            self.client = None  # Set to None to allow graceful degradation
 
     async def disconnect(self) -> None:
         """Disconnect from Redis."""
