@@ -1,19 +1,17 @@
 """Pytest configuration and fixtures for ARAS microservice tests."""
 
 import asyncio
-import pytest
-import pytest_asyncio
 from typing import AsyncGenerator, Generator
+
+import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.core.config import settings
 from app.core.database import get_db
 from app.main import app
 from app.models.news_models import Base
-
 
 # Test database URL
 TEST_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
@@ -51,9 +49,7 @@ async def test_engine():
 @pytest.fixture
 async def test_db_session(test_engine) -> AsyncGenerator[AsyncSession, None]:
     """Create test database session."""
-    async_session = sessionmaker(
-        test_engine, class_=AsyncSession, expire_on_commit=False
-    )
+    async_session = sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)
 
     async with async_session() as session:
         yield session

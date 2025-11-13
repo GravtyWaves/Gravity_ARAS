@@ -9,24 +9,14 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.schemas.news_schemas import (
-    APIResponse,
-    AnalysisRequest,
-    SentimentResponse,
-    EntitiesResponse,
-    TopicsResponse,
-    GraphAnalysisResponse
-)
+from app.schemas.news_schemas import AnalysisRequest, APIResponse
 from app.services.analysis_service import AnalysisService
 
 router = APIRouter()
 
 
 @router.post("/sentiment", response_model=APIResponse)
-async def analyze_sentiment(
-    request: AnalysisRequest,
-    db: AsyncSession = Depends(get_db)
-):
+async def analyze_sentiment(request: AnalysisRequest, db: AsyncSession = Depends(get_db)):
     """Analyze sentiment of text."""
     try:
         result = await AnalysisService.analyze_sentiment(request.text, request.language)
@@ -34,17 +24,14 @@ async def analyze_sentiment(
         return APIResponse(
             success=True,
             message="Sentiment analysis completed",
-            data={"sentiment": result.model_dump()}
+            data={"sentiment": result.model_dump()},
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Sentiment analysis failed: {str(e)}")
 
 
 @router.post("/entities", response_model=APIResponse)
-async def extract_entities(
-    request: AnalysisRequest,
-    db: AsyncSession = Depends(get_db)
-):
+async def extract_entities(request: AnalysisRequest, db: AsyncSession = Depends(get_db)):
     """Extract named entities from text."""
     try:
         result = await AnalysisService.extract_entities(request.text, request.language)
@@ -52,53 +39,40 @@ async def extract_entities(
         return APIResponse(
             success=True,
             message="Entity extraction completed",
-            data={"entities": result.model_dump()}
+            data={"entities": result.model_dump()},
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Entity extraction failed: {str(e)}")
 
 
 @router.post("/topics", response_model=APIResponse)
-async def extract_topics(
-    request: AnalysisRequest,
-    db: AsyncSession = Depends(get_db)
-):
+async def extract_topics(request: AnalysisRequest, db: AsyncSession = Depends(get_db)):
     """Extract topics from text using topic modeling."""
     try:
         result = await AnalysisService.extract_topics(request.text, request.language)
 
         return APIResponse(
-            success=True,
-            message="Topic modeling completed",
-            data={"topics": result.model_dump()}
+            success=True, message="Topic modeling completed", data={"topics": result.model_dump()}
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Topic modeling failed: {str(e)}")
 
 
 @router.post("/graph", response_model=APIResponse)
-async def analyze_graph(
-    request: AnalysisRequest,
-    db: AsyncSession = Depends(get_db)
-):
+async def analyze_graph(request: AnalysisRequest, db: AsyncSession = Depends(get_db)):
     """Perform graph analysis on text relationships."""
     try:
         result = await AnalysisService.analyze_graph(request.text, request.language)
 
         return APIResponse(
-            success=True,
-            message="Graph analysis completed",
-            data={"graph": result.model_dump()}
+            success=True, message="Graph analysis completed", data={"graph": result.model_dump()}
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Graph analysis failed: {str(e)}")
 
 
 @router.post("/comprehensive", response_model=APIResponse)
-async def comprehensive_analysis(
-    request: AnalysisRequest,
-    db: AsyncSession = Depends(get_db)
-):
+async def comprehensive_analysis(request: AnalysisRequest, db: AsyncSession = Depends(get_db)):
     """Perform comprehensive analysis (sentiment, entities, topics, graph)."""
     try:
         sentiment = await AnalysisService.analyze_sentiment(request.text, request.language)
@@ -113,8 +87,8 @@ async def comprehensive_analysis(
                 "sentiment": sentiment.model_dump(),
                 "entities": entities.model_dump(),
                 "topics": topics.model_dump(),
-                "graph": graph.model_dump()
-            }
+                "graph": graph.model_dump(),
+            },
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Comprehensive analysis failed: {str(e)}")
@@ -122,8 +96,7 @@ async def comprehensive_analysis(
 
 @router.post("/batch-sentiment", response_model=APIResponse)
 async def batch_sentiment_analysis(
-    texts: list[AnalysisRequest],
-    db: AsyncSession = Depends(get_db)
+    texts: list[AnalysisRequest], db: AsyncSession = Depends(get_db)
 ):
     """Analyze sentiment for multiple texts."""
     try:
@@ -135,7 +108,7 @@ async def batch_sentiment_analysis(
         return APIResponse(
             success=True,
             message=f"Batch sentiment analysis completed for {len(results)} texts",
-            data={"results": results}
+            data={"results": results},
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Batch sentiment analysis failed: {str(e)}")

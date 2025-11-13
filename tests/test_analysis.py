@@ -10,10 +10,7 @@ class TestAnalysisAPI:
     @pytest.mark.asyncio
     async def test_analyze_sentiment_success(self, client: AsyncClient):
         """Test successful sentiment analysis."""
-        request_data = {
-            "text": "This is a great article about positive news!",
-            "language": "en"
-        }
+        request_data = {"text": "This is a great article about positive news!", "language": "en"}
 
         response = await client.post("/api/v1/analysis/sentiment", json=request_data)
 
@@ -31,10 +28,7 @@ class TestAnalysisAPI:
     @pytest.mark.asyncio
     async def test_analyze_sentiment_persian(self, client: AsyncClient):
         """Test sentiment analysis for Persian text."""
-        request_data = {
-            "text": "این مقاله بسیار عالی و آموزنده است!",
-            "language": "fa"
-        }
+        request_data = {"text": "این مقاله بسیار عالی و آموزنده است!", "language": "fa"}
 
         response = await client.post("/api/v1/analysis/sentiment", json=request_data)
 
@@ -49,7 +43,7 @@ class TestAnalysisAPI:
         """Test successful entity extraction."""
         request_data = {
             "text": "Barack Obama visited Microsoft headquarters in Seattle.",
-            "language": "en"
+            "language": "en",
         }
 
         response = await client.post("/api/v1/analysis/entities", json=request_data)
@@ -65,9 +59,12 @@ class TestAnalysisAPI:
     async def test_extract_topics_success(self, client: AsyncClient):
         """Test successful topic extraction."""
         request_data = {
-            "text": "Machine learning and artificial intelligence are transforming technology industry.",
+            "text": (
+                "Machine learning and artificial intelligence are "
+                "transforming technology industry."
+            ),
             "language": "en",
-            "num_topics": 3
+            "num_topics": 3,
         }
 
         response = await client.post("/api/v1/analysis/topics", json=request_data)
@@ -83,8 +80,11 @@ class TestAnalysisAPI:
     async def test_analyze_text_graph_success(self, client: AsyncClient):
         """Test successful text graph analysis."""
         request_data = {
-            "text": "John works at Google. Mary is John's colleague. They collaborate on AI projects.",
-            "language": "en"
+            "text": (
+                "John works at Google. Mary is John's colleague. "
+                "They collaborate on AI projects."
+            ),
+            "language": "en",
         }
 
         response = await client.post("/api/v1/analysis/graph", json=request_data)
@@ -108,10 +108,10 @@ class TestAnalysisAPI:
             "texts": [
                 "This is positive news.",
                 "This is negative news.",
-                "This is neutral information."
+                "This is neutral information.",
             ],
             "language": "en",
-            "analysis_types": ["sentiment", "entities"]
+            "analysis_types": ["sentiment", "entities"],
         }
 
         response = await client.post("/api/v1/analysis/batch", json=request_data)
@@ -127,10 +127,7 @@ class TestAnalysisAPI:
     @pytest.mark.asyncio
     async def test_analyze_sentiment_empty_text(self, client: AsyncClient):
         """Test sentiment analysis with empty text."""
-        request_data = {
-            "text": "",
-            "language": "en"
-        }
+        request_data = {"text": "", "language": "en"}
 
         response = await client.post("/api/v1/analysis/sentiment", json=request_data)
 
@@ -143,10 +140,7 @@ class TestAnalysisAPI:
     @pytest.mark.asyncio
     async def test_analyze_sentiment_invalid_language(self, client: AsyncClient):
         """Test sentiment analysis with invalid language."""
-        request_data = {
-            "text": "This is a test.",
-            "language": "invalid"
-        }
+        request_data = {"text": "This is a test.", "language": "invalid"}
 
         response = await client.post("/api/v1/analysis/sentiment", json=request_data)
 

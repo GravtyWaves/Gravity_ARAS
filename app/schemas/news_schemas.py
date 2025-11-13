@@ -30,6 +30,7 @@ class NewsArticleBase(BaseModel):
 
 class NewsArticleCreate(NewsArticleBase):
     """Schema for creating news articles."""
+
     pass
 
 
@@ -69,6 +70,7 @@ class EntityBase(BaseModel):
 
 class EntityCreate(EntityBase):
     """Schema for creating entities."""
+
     pass
 
 
@@ -107,6 +109,7 @@ class TrendBase(BaseModel):
 
 class TrendCreate(TrendBase):
     """Schema for creating trends."""
+
     pass
 
 

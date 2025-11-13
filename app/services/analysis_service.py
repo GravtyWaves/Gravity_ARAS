@@ -6,13 +6,13 @@ Built by Elite Team - Data Scientist (PhD in Data Science)
 """
 
 import logging
-from typing import Dict, List
+
 
 from app.schemas.news_schemas import (
-    SentimentResponse,
     EntitiesResponse,
+    GraphAnalysisResponse,
+    SentimentResponse,
     TopicsResponse,
-    GraphAnalysisResponse
 )
 
 logger = logging.getLogger(__name__)
@@ -47,9 +47,7 @@ class AnalysisService:
                 score = 0.0
 
             return SentimentResponse(
-                sentiment=sentiment,
-                score=score,
-                confidence=0.8  # Placeholder confidence
+                sentiment=sentiment, score=score, confidence=0.8  # Placeholder confidence
             )
 
         except Exception as e:
@@ -68,22 +66,26 @@ class AnalysisService:
 
             # Mock entities for demonstration
             if "president" in text.lower():
-                entities.append({
-                    "text": "president",
-                    "label": "PERSON",
-                    "start": text.lower().find("president"),
-                    "end": text.lower().find("president") + len("president"),
-                    "confidence": 0.9
-                })
+                entities.append(
+                    {
+                        "text": "president",
+                        "label": "PERSON",
+                        "start": text.lower().find("president"),
+                        "end": text.lower().find("president") + len("president"),
+                        "confidence": 0.9,
+                    }
+                )
 
             if "iran" in text.lower():
-                entities.append({
-                    "text": "Iran",
-                    "label": "LOCATION",
-                    "start": text.lower().find("iran"),
-                    "end": text.lower().find("iran") + len("iran"),
-                    "confidence": 0.95
-                })
+                entities.append(
+                    {
+                        "text": "Iran",
+                        "label": "LOCATION",
+                        "start": text.lower().find("iran"),
+                        "end": text.lower().find("iran") + len("iran"),
+                        "confidence": 0.95,
+                    }
+                )
 
             return EntitiesResponse(entities=entities)
 
@@ -104,20 +106,20 @@ class AnalysisService:
                     "topic_id": 0,
                     "keywords": ["politics", "government", "election", "policy"],
                     "weight": 0.4,
-                    "name": "Political Affairs"
+                    "name": "Political Affairs",
                 },
                 {
                     "topic_id": 1,
                     "keywords": ["economy", "market", "trade", "business"],
                     "weight": 0.3,
-                    "name": "Economic Issues"
+                    "name": "Economic Issues",
                 },
                 {
                     "topic_id": 2,
                     "keywords": ["technology", "innovation", "science", "research"],
                     "weight": 0.3,
-                    "name": "Technology & Science"
-                }
+                    "name": "Technology & Science",
+                },
             ]
 
             return TopicsResponse(topics=topics)
@@ -135,29 +137,53 @@ class AnalysisService:
 
             # Mock graph analysis for demonstration
             nodes = [
-                {"id": "node1", "label": "Entity A", "type": "entity", "properties": {"weight": 1.0}},
-                {"id": "node2", "label": "Entity B", "type": "entity", "properties": {"weight": 0.8}},
-                {"id": "node3", "label": "Topic 1", "type": "topic", "properties": {"weight": 0.6}}
+                {
+                    "id": "node1",
+                    "label": "Entity A",
+                    "type": "entity",
+                    "properties": {"weight": 1.0},
+                },
+                {
+                    "id": "node2",
+                    "label": "Entity B",
+                    "type": "entity",
+                    "properties": {"weight": 0.8},
+                },
+                {"id": "node3", "label": "Topic 1", "type": "topic", "properties": {"weight": 0.6}},
             ]
 
             edges = [
-                {"source": "node1", "target": "node2", "relationship": "related_to", "strength": 0.9, "confidence": 0.8},
-                {"source": "node1", "target": "node3", "relationship": "belongs_to", "strength": 0.7, "confidence": 0.6},
-                {"source": "node2", "target": "node3", "relationship": "belongs_to", "strength": 0.5, "confidence": 0.4}
+                {
+                    "source": "node1",
+                    "target": "node2",
+                    "relationship": "related_to",
+                    "strength": 0.9,
+                    "confidence": 0.8,
+                },
+                {
+                    "source": "node1",
+                    "target": "node3",
+                    "relationship": "belongs_to",
+                    "strength": 0.7,
+                    "confidence": 0.6,
+                },
+                {
+                    "source": "node2",
+                    "target": "node3",
+                    "relationship": "belongs_to",
+                    "strength": 0.5,
+                    "confidence": 0.4,
+                },
             ]
 
             metrics = {
                 "centrality": {"node1": 0.8, "node2": 0.6, "node3": 0.4},
                 "clustering_coefficient": 0.7,
                 "density": 0.5,
-                "connected_components": 1
+                "connected_components": 1,
             }
 
-            return GraphAnalysisResponse(
-                nodes=nodes,
-                edges=edges,
-                metrics=metrics
-            )
+            return GraphAnalysisResponse(nodes=nodes, edges=edges, metrics=metrics)
 
         except Exception as e:
             logger.error(f"Graph analysis failed: {e}")

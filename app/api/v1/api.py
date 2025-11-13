@@ -7,13 +7,7 @@ Built by Elite Team - Backend Developers (PhD in Software Engineering)
 
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import (
-    analysis,
-    articles,
-    entities,
-    health,
-    trends
-)
+from app.api.v1.endpoints import analysis, articles, entities, health, trends
 
 api_router = APIRouter()
 

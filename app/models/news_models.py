@@ -5,10 +5,7 @@ SQLAlchemy models for news analysis
 Built by Elite Team - Database Engineer (PhD in Database Systems)
 """
 
-from datetime import datetime
-from typing import Dict, List, Optional
-
-from sqlalchemy import Column, DateTime, Float, Integer, String, Text, JSON
+from sqlalchemy import JSON, Column, DateTime, Float, Integer, String, Text
 from sqlalchemy.sql import func
 
 from app.core.database import Base
@@ -106,4 +103,7 @@ class Edge(Base):
     created_at = Column(DateTime, server_default=func.now())
 
     def __repr__(self):
-        return f"<Edge(id={self.id}, source='{self.source_id}', target='{self.target_id}', type='{self.relationship_type}')>"
+        return (
+            f"<Edge(id={self.id}, source='{self.source_id}', "
+            f"target='{self.target_id}', type='{self.relationship_type}')>"
+        )

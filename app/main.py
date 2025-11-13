@@ -27,7 +27,6 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
 
 from app.api.v1.api import api_router
 from app.core.config import settings
@@ -102,7 +101,7 @@ async def root():
         "message": "ARAS Microservice - Advanced News Analysis System",
         "version": "1.0.0",
         "docs": "/docs",
-        "health": "/health"
+        "health": "/health",
     }
 
 

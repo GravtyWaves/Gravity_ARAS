@@ -11,7 +11,6 @@ from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import NullPool
 
 from app.core.config import settings
 
@@ -20,10 +19,8 @@ logger = logging.getLogger(__name__)
 # Create async engine (DB-agnostic - works with PostgreSQL, MySQL, SQLite, etc.)
 engine = create_async_engine(
     settings.DATABASE_URL,
-    pool_size=settings.DATABASE_POOL_SIZE,
-    max_overflow=settings.DATABASE_MAX_OVERFLOW,
-    poolclass=NullPool,  # Disable connection pooling for serverless compatibility
     echo=settings.DEBUG,
+    pool_pre_ping=True,
 )
 
 # Create async session factory

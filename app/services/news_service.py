@@ -22,10 +22,7 @@ class NewsService:
     """Service for managing news articles."""
 
     @staticmethod
-    async def create_article(
-        db: AsyncSession,
-        article_data: NewsArticleCreate
-    ) -> NewsArticle:
+    async def create_article(db: AsyncSession, article_data: NewsArticleCreate) -> NewsArticle:
         """Create a new news article."""
         # Check for duplicate URL
         existing = await db.execute(
@@ -55,30 +52,31 @@ class NewsService:
             return NewsArticle(**cached)
 
         # Query database
-        result = await db.execute(
-            select(NewsArticle).where(NewsArticle.id == article_id)
-        )
+        result = await db.execute(select(NewsArticle).where(NewsArticle.id == article_id))
         article = result.scalar_one_or_none()
 
         # Cache if found
         if article:
-            await redis_client.set_json(f"article:{article_id}", {
-                "id": article.id,
-                "title": article.title,
-                "content": article.content,
-                "summary": article.summary,
-                "source": article.source,
-                "published_date": article.published_date.isoformat(),
-                "language": article.language,
-                "category": article.category,
-                "tags": article.tags,
-                "sentiment_score": article.sentiment_score,
-                "entities": article.entities,
-                "topics": article.topics,
-                "url": article.url,
-                "created_at": article.created_at.isoformat(),
-                "updated_at": article.updated_at.isoformat(),
-            })
+            await redis_client.set_json(
+                f"article:{article_id}",
+                {
+                    "id": article.id,
+                    "title": article.title,
+                    "content": article.content,
+                    "summary": article.summary,
+                    "source": article.source,
+                    "published_date": article.published_date.isoformat(),
+                    "language": article.language,
+                    "category": article.category,
+                    "tags": article.tags,
+                    "sentiment_score": article.sentiment_score,
+                    "entities": article.entities,
+                    "topics": article.topics,
+                    "url": article.url,
+                    "created_at": article.created_at.isoformat(),
+                    "updated_at": article.updated_at.isoformat(),
+                },
+            )
 
         return article
 
@@ -88,31 +86,63 @@ class NewsService:
         skip: int = 0,
         limit: int = 100,
         category: Optional[str] = None,
-        source: Optional[str] = None
+        source: Optional[str] = None,
+        language: Optional[str] = None,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+        sort_by: str = "published_date",
+        sort_order: str = "desc",
     ) -> List[NewsArticle]:
-        """Get list of articles with optional filtering."""
-        query = select(NewsArticle).offset(skip).limit(limit)
+        """
+        Get list of articles with filtering and sorting.
 
+        Args:
+            db: Database session
+            skip: Number of records to skip (pagination)
+            limit: Maximum number of records to return
+            category: Filter by category
+            source: Filter by source
+            language: Filter by language
+            start_date: Filter by published_date >= start_date (ISO format)
+            end_date: Filter by published_date <= end_date (ISO format)
+            sort_by: Field to sort by (default: published_date)
+            sort_order: Sort order - 'asc' or 'desc' (default: desc)
+        """
+        from datetime import datetime
+
+        query = select(NewsArticle)
+
+        # Apply filters
         if category:
             query = query.where(NewsArticle.category == category)
         if source:
             query = query.where(NewsArticle.source == source)
+        if language:
+            query = query.where(NewsArticle.language == language)
+        if start_date:
+            query = query.where(NewsArticle.published_date >= datetime.fromisoformat(start_date))
+        if end_date:
+            query = query.where(NewsArticle.published_date <= datetime.fromisoformat(end_date))
 
-        query = query.order_by(NewsArticle.published_date.desc())
+        # Apply sorting
+        sort_column = getattr(NewsArticle, sort_by, NewsArticle.published_date)
+        if sort_order.lower() == "asc":
+            query = query.order_by(sort_column.asc())
+        else:
+            query = query.order_by(sort_column.desc())
+
+        # Apply pagination
+        query = query.offset(skip).limit(limit)
 
         result = await db.execute(query)
         return result.scalars().all()
 
     @staticmethod
     async def update_article(
-        db: AsyncSession,
-        article_id: int,
-        update_data: NewsArticleUpdate
+        db: AsyncSession, article_id: int, update_data: NewsArticleUpdate
     ) -> Optional[NewsArticle]:
         """Update an existing article."""
-        result = await db.execute(
-            select(NewsArticle).where(NewsArticle.id == article_id)
-        )
+        result = await db.execute(select(NewsArticle).where(NewsArticle.id == article_id))
         article = result.scalar_one_or_none()
 
         if not article:
@@ -135,9 +165,7 @@ class NewsService:
     @staticmethod
     async def delete_article(db: AsyncSession, article_id: int) -> bool:
         """Delete an article."""
-        result = await db.execute(
-            select(NewsArticle).where(NewsArticle.id == article_id)
-        )
+        result = await db.execute(select(NewsArticle).where(NewsArticle.id == article_id))
         article = result.scalar_one_or_none()
 
         if not article:
@@ -154,18 +182,18 @@ class NewsService:
 
     @staticmethod
     async def search_articles(
-        db: AsyncSession,
-        query: str,
-        skip: int = 0,
-        limit: int = 50
+        db: AsyncSession, query: str, skip: int = 0, limit: int = 50
     ) -> List[NewsArticle]:
         """Search articles by title or content."""
         # Simple text search (PostgreSQL full-text search would be better)
         search_query = f"%{query}%"
         result = await db.execute(
-            select(NewsArticle).where(
-                (NewsArticle.title.ilike(search_query)) |
-                (NewsArticle.content.ilike(search_query))
-            ).offset(skip).limit(limit).order_by(NewsArticle.published_date.desc())
+            select(NewsArticle)
+            .where(
+                (NewsArticle.title.ilike(search_query)) | (NewsArticle.content.ilike(search_query))
+            )
+            .offset(skip)
+            .limit(limit)
+            .order_by(NewsArticle.published_date.desc())
         )
         return result.scalars().all()

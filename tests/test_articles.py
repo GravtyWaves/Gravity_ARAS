@@ -2,18 +2,13 @@
 
 import pytest
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.news_models import NewsArticle
 
 
 class TestArticlesAPI:
     """Test cases for articles API."""
 
     @pytest.mark.asyncio
-    async def test_create_article_success(
-        self, client: AsyncClient, sample_article_data
-    ):
+    async def test_create_article_success(self, client: AsyncClient, sample_article_data):
         """Test successful article creation."""
         response = await client.post("/api/v1/articles/", json=sample_article_data)
 
@@ -35,9 +30,7 @@ class TestArticlesAPI:
     async def test_get_articles_list(self, client: AsyncClient, sample_article_data):
         """Test getting list of articles."""
         # Create an article first
-        create_response = await client.post(
-            "/api/v1/articles/", json=sample_article_data
-        )
+        create_response = await client.post("/api/v1/articles/", json=sample_article_data)
         assert create_response.status_code == 201
 
         # Get articles list
@@ -54,9 +47,7 @@ class TestArticlesAPI:
     async def test_get_article_by_id(self, client: AsyncClient, sample_article_data):
         """Test getting specific article by ID."""
         # Create an article first
-        create_response = await client.post(
-            "/api/v1/articles/", json=sample_article_data
-        )
+        create_response = await client.post("/api/v1/articles/", json=sample_article_data)
         assert create_response.status_code == 201
         created_article = create_response.json()["data"]["article"]
 
@@ -77,9 +68,7 @@ class TestArticlesAPI:
     async def test_update_article(self, client: AsyncClient, sample_article_data):
         """Test updating an article."""
         # Create an article first
-        create_response = await client.post(
-            "/api/v1/articles/", json=sample_article_data
-        )
+        create_response = await client.post("/api/v1/articles/", json=sample_article_data)
         assert create_response.status_code == 201
         created_article = create_response.json()["data"]["article"]
 
@@ -87,9 +76,7 @@ class TestArticlesAPI:
         update_data = sample_article_data.copy()
         update_data["title"] = "Updated Test Article"
 
-        response = await client.put(
-            f"/api/v1/articles/{created_article['id']}", json=update_data
-        )
+        response = await client.put(f"/api/v1/articles/{created_article['id']}", json=update_data)
 
         assert response.status_code == 200
         data = response.json()
@@ -105,9 +92,7 @@ class TestArticlesAPI:
     async def test_delete_article(self, client: AsyncClient, sample_article_data):
         """Test deleting an article."""
         # Create an article first
-        create_response = await client.post(
-            "/api/v1/articles/", json=sample_article_data
-        )
+        create_response = await client.post("/api/v1/articles/", json=sample_article_data)
         assert create_response.status_code == 201
         created_article = create_response.json()["data"]["article"]
 
@@ -127,9 +112,7 @@ class TestArticlesAPI:
     async def test_search_articles(self, client: AsyncClient, sample_article_data):
         """Test searching articles."""
         # Create an article first
-        create_response = await client.post(
-            "/api/v1/articles/", json=sample_article_data
-        )
+        create_response = await client.post("/api/v1/articles/", json=sample_article_data)
         assert create_response.status_code == 201
 
         # Search for articles

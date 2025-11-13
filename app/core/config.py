@@ -6,9 +6,9 @@ Built by Elite Team - Security Specialist (PhD in Cybersecurity)
 """
 
 import secrets
-from typing import List, Optional, Union
+from typing import List, Union
 
-from pydantic import AnyHttpUrl, field_validator, ValidationInfo
+from pydantic import AnyHttpUrl, field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -39,9 +39,7 @@ class Settings(BaseSettings):
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     @classmethod
-    def assemble_cors_origins(
-        cls, v: Union[str, List[str]]
-    ) -> Union[List[str], str]:
+    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
         if isinstance(v, str) and not v.startswith("["):
             return [i.strip() for i in v.split(",")]
         elif isinstance(v, (list, str)):
@@ -68,7 +66,7 @@ class Settings(BaseSettings):
     NEWS_SOURCES: List[str] = [
         "https://rss.cnn.com/rss/edition.rss",
         "https://feeds.bbci.co.uk/news/rss.xml",
-        "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml"
+        "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
     ]
 
     # Celery Configuration (for async tasks)
